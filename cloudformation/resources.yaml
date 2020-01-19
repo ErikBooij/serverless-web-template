@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: "Serverless Web - Core Resources"
+Globals:
+  Function:
+    Timeout: 15
+Parameters:
+  AssetBucketName:
+    Default: ""
+    Type: "String"
+  CodeBucketName:
+    Default: ""
+    Type: "String"
+  DNSAssetsDomainName:
+    Default: ""
+    Type: "String"
+  DNSDomainName:
+    Default: ""
+    Type: "String"
+Conditions:
+  IncludeAssetCDN: !Not [ !Equals [ !Ref "DNSAssetsDomainName", "" ] ]
+Resources:
+  APIPathMapping:
+    Type: "AWS::ApiGateway::BasePathMapping"
+    Properties:
+      DomainName: !Ref "DomainName"
+      RestApiId: !Ref "ServerlessRestApi"
+      Stage: !Ref "ServerlessRestApiProdStage"
+  AssetBucket:
+    Type: "AWS::S3::Bucket"
+    Condition: "IncludeAssetCDN"
+    Properties:
+      AccessControl: "Private"
+      BucketName: !Ref "AssetBucketName"
+      VersioningConfiguration:
+        Status: "Enabled"
+      LifecycleConfiguration:
+        Rules:
+          - NoncurrentVersionExpirationInDays: 3
+            Status: "Enabled"
+  AssetBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Condition: "IncludeAssetCDN"
+    Properties:
+      Bucket: !Ref "AssetBucket"
+      PolicyDocument:
+        Statement:
+          - Action:
+              - "s3:Get*"
+              - "s3:List*"
+            Effect: "Allow"
+            Resource: !Sub "arn:aws:s3:::${AssetBucketName}/*"
+            Principal:
+              CanonicalUser: !GetAtt "AssetCDNOriginIdentity.S3CanonicalUserId"
+  AssetCDN:
+    Type: "AWS::CloudFront::Distribution"
+    Condition: "IncludeAssetCDN"
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref "DNSAssetsDomainName"
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - "GET"
+            - "HEAD"
+          CachedMethods:
+            - "GET"
+            - "HEAD"
+          Compress: true
+          DefaultTTL: 86400
+          ForwardedValues:
+            QueryString: false
+          TargetOriginId: "assets-cdn-origin"
+          ViewerProtocolPolicy: "https-only"
+        Enabled: true
+        HttpVersion: "http2"
+        IPV6Enabled: true
+        Origins:
+          - DomainName: !Sub "${AssetBucketName}.s3.amazonaws.com"
+            Id: "assets-cdn-origin"
+            OriginPath: "/assets"
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${AssetCDNOriginIdentity}"
+        PriceClass: "PriceClass_All"
+        ViewerCertificate:
+          AcmCertificateArn: "arn:aws:acm:us-east-1:871702797223:certificate/7bd2abf2-139a-4d86-86d1-1f11d4192f72" # Cannot be import across regions
+          MinimumProtocolVersion: "TLSv1.1_2016"
+          SslSupportMethod: "sni-only"
+  AssetCDNOriginIdentity:
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Condition: "IncludeAssetCDN"
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "Identity to serve assets from a private bucket through Cloudfront"
+  DomainName:
+    Type: "AWS::ApiGateway::DomainName"
+    Properties:
+      CertificateArn: "arn:aws:acm:us-east-1:871702797223:certificate/efcc4929-b570-47ad-96ab-565b433a2cef" # Cannot be import across regions
+      DomainName: !Ref "DNSDomainName"
+      EndpointConfiguration:
+        Types:
+          - "EDGE"
+  WebFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      CodeUri: ".."
+      Handler: "dist/index.entry"
+      Runtime: "nodejs12.x"
+      Events:
+        AnyHTTPAPI:
+          Type: "Api"
+          Properties:
+            Path: "{path+}"
+            Method: "any"
+        AnyHTTPAPIRoot:
+          Type: "Api"
+          Properties:
+            Path: "/"
+            Method: "any"

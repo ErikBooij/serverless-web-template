@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Serverless Web - Meta Resources"
+Parameters:
+  CodeBucketName:
+    Default: ""
+    Type: "String"
+Resources:
+  CodeBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      AccessControl: "Private"
+      BucketName: !Ref "CodeBucketName"
+      VersioningConfiguration:
+        Status: "Enabled"
+      LifecycleConfiguration:
+        Rules:
+          - NoncurrentVersionExpirationInDays: 3
+            Status: "Enabled"

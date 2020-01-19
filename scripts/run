@@ -1,0 +1,30 @@
+#!/usr/bin/env node
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const handler = require('../dist');
+
+const LISTEN_PORT = 80;
+
+const app = express();
+
+app.use(bodyParser.raw({ type: ['*', '*/*'] }));
+app.use(async (req, res) => {
+  const event = {
+    path: req.path,
+    headers: req.headers,
+    httpMethod: req.method,
+    queryStringParameters: Object.entries(req.query).length === 0 ? null : req.query,
+    body: req.body.toString()
+  };
+
+  const response = await handler.entry(event);
+
+  res.write(response.body);
+  res.status(response.statusCode);
+  res.send();
+});
+
+app.listen(LISTEN_PORT, () => {
+  console.log(`Server is listening for requests on port ${LISTEN_PORT}`);
+});

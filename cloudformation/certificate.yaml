@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Serverless Web - Certificate Resources"
+Parameters:
+  ApplicationName:
+    Default: ""
+    Type: "String"
+  DNSDomainCertificateValidationDomain:
+    Default: ""
+    Type: "String"
+  DNSAssetsDomainName:
+    Default: ""
+    Type: "String"
+  DNSDomainName:
+    Default: ""
+    Type: "String"
+Conditions:
+  IncludeAssetCDN: !Not [ !Equals [ !Ref "DNSAssetsDomainName", "" ] ]
+Resources:
+  AssetsCertificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Condition: "IncludeAssetCDN"
+    Properties:
+      DomainName: !Ref "DNSAssetsDomainName"
+      DomainValidationOptions:
+        - DomainName: !Ref "DNSAssetsDomainName"
+          ValidationDomain: !Ref "DNSDomainCertificateValidationDomain"
+      ValidationMethod: "DNS"
+  Certificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+      DomainName: !Ref "DNSDomainName"
+      DomainValidationOptions:
+        - DomainName: !Ref "DNSDomainName"
+          ValidationDomain: !Ref "DNSDomainCertificateValidationDomain"
+      ValidationMethod: "DNS"
+Outputs:
+  APICertificateOutput:
+    Value: !Ref "Certificate"
+    Export:
+      Name: !Sub "${ApplicationName}-certificate-arn"
+  AssetsCertificateOutput:
+    Value: !Ref "AssetsCertificate"
+    Condition: "IncludeAssetCDN"
+    Export:
+      Name: !Sub "${ApplicationName}-assets-certificate-arn"

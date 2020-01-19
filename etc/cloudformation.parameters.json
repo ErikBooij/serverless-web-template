@@ -1,0 +1,11 @@
+{
+  "ApplicationName": "serverless-web-template",
+  "AssetBucketName": "serverless-web-template-assets",
+  "CodeBucketName": "serverless-web-template-code",
+  "DNSDomainCertificateValidationDomain": "booij.dev",
+  "DNSAssetsDomainName": "assets.serverless-web-template.booij.dev",
+  "DNSDomainName": "serverless-web-template.booij.dev",
+  "StackNameCertificate": "serverless-web-template-certificate",
+  "StackNameMeta": "serverless-web-template-meta",
+  "StackNameResources": "serverless-web-template-resources"
+}

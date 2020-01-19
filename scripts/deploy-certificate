@@ -1,0 +1,13 @@
+#!/bin/bash
+
+source ./scripts/init-deploy
+
+export AWS_DEFAULT_REGION="us-east-1" # Edge Certficicates need to be deployed here
+
+STACK_NAME=$(jq ".StackNameCertificate" ./etc/cloudformation.parameters.json -r)
+
+aws cloudformation deploy \
+  --template-file cloudformation/certificate.yaml \
+  --stack-name "$STACK_NAME" \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides $(make prepare-cfn-parameters)

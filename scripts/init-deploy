@@ -1,0 +1,8 @@
+#!/bin/bash
+
+export AWS_DEFAULT_OUTPUT="json"
+export AWS_ACCESS_KEY_ID=$(jq ".credentials.accessKeyId" ~/.aws-dev-account.json -r)
+export AWS_SECRET_ACCESS_KEY=$(jq ".credentials.secretAccessKey" ~/.aws-dev-account.json -r)
+export AWS_DEFAULT_REGION=$(jq ".credentials.region" ~/.aws-dev-account.json -r)
+
+CODE_BUCKET=$(jq ".CodeBucketName" ./etc/cloudformation.parameters.json -r)

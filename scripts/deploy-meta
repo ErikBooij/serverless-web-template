@@ -1,0 +1,11 @@
+#!/bin/bash
+
+source ./scripts/init-deploy
+
+STACK_NAME=$(jq ".StackNameMeta" ./etc/cloudformation.parameters.json -r)
+
+aws cloudformation deploy \
+  --template-file cloudformation/meta.yaml \
+  --stack-name "$STACK_NAME" \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides $(make prepare-cfn-parameters)

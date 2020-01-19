@@ -1,0 +1,20 @@
+#!/bin/bash
+
+source ./scripts/init-deploy
+
+STACK_NAME=$(jq ".StackNameResources" ./etc/cloudformation.parameters.json -r)
+ASSET_BUCKET=$(jq ".AssetBucketName" ./etc/cloudformation.parameters.json -r)
+
+make build-functions
+
+echo $ASSET_BUCKET
+if [ $ASSET_BUCKET ] && [ $ASSET_BUCKET != null ]; then
+  aws s3 cp --recursive assets "s3://$ASSET_BUCKET/assets"
+fi;
+
+sam deploy \
+  --template-file cloudformation/resources.yaml \
+  --stack-name "$STACK_NAME" \
+  --s3-bucket "$CODE_BUCKET" \
+  --parameter-overrides $(make prepare-cfn-parameters) \
+  --capabilities CAPABILITY_NAMED_IAM
