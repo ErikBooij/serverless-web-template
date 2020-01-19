@@ -106,6 +106,9 @@ Resources:
       CodeUri: ".."
       Handler: "dist/index.entry"
       Runtime: "nodejs12.x"
+      Environment:
+        Variables:
+          ASSET_HOST: !Sub "https://${DNSAssetsDomainName}"
       Events:
         AnyHTTPAPI:
           Type: "Api"

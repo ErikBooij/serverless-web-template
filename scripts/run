@@ -9,6 +9,7 @@ const LISTEN_PORT = 80;
 const app = express();
 
 app.use(bodyParser.raw({ type: ['*', '*/*'] }));
+app.use('/assets', express.static(__dirname + '/../assets'));
 app.use(async (req, res) => {
   const event = {
     path: req.path,
